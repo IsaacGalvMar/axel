@@ -725,6 +725,38 @@ TEST(no_usable_filename_clears_an_old_result)
 	CHECK_STR(output, "");
 }
 
+TEST(an_ftp_url_with_a_body_is_rejected)
+{
+    ASSERT(!http_request_is_valid(PROTO_FTP, 1, false, "user=test&password=test"));
+    ASSERT(!http_request_is_valid(PROTO_FTPS, 1, false, "user=test&password=test"));
+
+    ASSERT(http_request_is_valid(PROTO_HTTP, 1, false, "user=test&password=test"));
+    ASSERT(http_request_is_valid(PROTO_HTTPS, 1, false, "user=test&password=test"));
+}
+
+TEST(multiple_urls_with_a_body_are_rejected)
+{
+    ASSERT(!http_request_is_valid(PROTO_HTTP, 2, false, "user=test&password=test"));
+    ASSERT(!http_request_is_valid(PROTO_HTTP, 5, false, "user=test&password=test"));
+
+    ASSERT(http_request_is_valid(PROTO_HTTP, 1, false, "user=test&password=test"));
+}
+
+TEST(a_search_with_a_body_is_rejected)
+{
+    ASSERT(!http_request_is_valid(PROTO_HTTP, 1, true, "user=test&password=test"));
+
+    ASSERT(http_request_is_valid(PROTO_HTTP, 1, false, "user=test&password=test"));
+}
+
+TEST(manual_content_length_mismatch_is_rejected)
+{
+    ASSERT(!http_content_length_matches("{\"filename\": \"archivo.iso\", \"retries\": 3}", 12, 15));
+    ASSERT(!http_content_length_matches("{\"filename\": \"archivo.iso\", \"retries\": 3}", 12, 5));
+
+    ASSERT(http_content_length_matches("{\"filename\": \"archivo.iso\", \"retries\": 3}", 12, 12));
+}
+
 int
 main(void)
 {
@@ -834,6 +866,15 @@ main(void)
 		      "a name too long for the buffer is refused");
 	REGISTER_DESC(no_usable_filename_clears_an_old_result,
 		      "no usable filename leaves an empty result");
+
+	REGISTER_DESC(an_ftp_url_with_a_body_is_rejected,
+                  "an ftp url is rejected when a request body is configured");
+    REGISTER_DESC(multiple_urls_with_a_body_are_rejected,
+                  "multiple urls are rejected when a request body is configured");
+    REGISTER_DESC(a_search_with_a_body_is_rejected,
+                  "a search request with a body is rejected");
+    REGISTER_DESC(manual_content_length_mismatch_is_rejected,
+                  "a manually set content-length that disagrees with the body is rejected");
 
 	RUN_ALL();
 	return DONE();
