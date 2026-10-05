@@ -192,6 +192,33 @@ TEST(a_host_is_what_counts_not_the_protocol_it_is_reached_by)
 					    PROTO_HTTP, "example.org"));
 }
 
+TEST(using_both_post_data_and_post_file_is_invalid)
+{
+    TEST(using_both_post_data_and_post_file_is_invalid)
+{
+    ASSERT(conf_post_options_conflict("test=1", "test.txt"));
+
+    ASSERT(!conf_post_options_conflict("test=1", NULL));
+    ASSERT(!conf_post_options_conflict(NULL, "test.txt"));
+    ASSERT(!conf_post_options_conflict(NULL, NULL));
+}
+}
+
+TEST(a_redirect_to_another_host_with_a_body_aborts)
+{
+    ASSERT(!conf_body_may_follow("example.com", "example.org", false));
+}
+
+TEST(a_redirect_to_another_host_with_a_body_is_allowed_if_trusted)
+{
+    ASSERT(conf_body_may_follow("example.com", "example.org", true));
+}
+
+TEST(a_redirect_within_host_with_a_body_keeps_going)
+{
+    ASSERT(conf_body_may_follow("example.com", "example.com", false));
+}
+
 int
 main(void)
 {
@@ -230,6 +257,17 @@ main(void)
 		      "a redirect into TLS on the same host keeps them");
 	REGISTER_DESC(a_host_is_what_counts_not_the_protocol_it_is_reached_by,
 		      "the host decides, not which protocol reaches it");
+
+	REGISTER_DESC(using_both_post_data_and_post_file_is_invalid,
+                  "supplying both post-data and post-file is rejected");
+    REGISTER_DESC(a_redirect_to_another_host_with_a_body_aborts,
+                  "a redirect to another host with a body aborts unless trusted");
+    REGISTER_DESC(a_redirect_to_another_host_with_a_body_is_allowed_if_trusted,
+                  "a redirect to another host with a body is allowed if location-trusted is set");
+    REGISTER_DESC(a_redirect_within_host_with_a_body_keeps_going,
+                  "a redirect within the same host keeps the request body");
+
+
 
 	RUN_ALL();
 	return DONE();
